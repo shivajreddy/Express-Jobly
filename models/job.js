@@ -46,7 +46,7 @@ class Job {
    * */
 
   static async findAll() {
-    const companiesRes = await db.query(`SELECT * FROM jobs`);
+    const companiesRes = await db.query(`SELECT * FROM jobs ORDER BY id`);
     return companiesRes.rows;
   }
 
@@ -91,25 +91,24 @@ class Job {
 
   static async update(id, data) {
     const { setCols, values } = sqlForPartialUpdate(data, {
-      numEmployees: "num_employees",
-      logoUrl: "logo_url",
+      companyHandle: "company_handle",
     });
     const handleVarIdx = "$" + (values.length + 1);
 
-    const querySql = `UPDATE companies 
+    const querySql = `UPDATE jobs
                       SET ${setCols} 
-                      WHERE handle = ${handleVarIdx} 
-                      RETURNING handle, 
-                                name, 
-                                description, 
-                                num_employees AS "numEmployees", 
-                                logo_url AS "logoUrl"`;
-    const result = await db.query(querySql, [...values, id]);
+                      WHERE id = ${id} 
+                      RETURNING id, 
+                                title, 
+                                salary, 
+                                equity,
+                                company_handle AS "companyHandle"`;
+    const result = await db.query(querySql, [...values]);
     const job = result.rows[0];
 
     if (!job) throw new NotFoundError(`No job with id: ${id}`);
 
-    return company;
+    return job;
   }
 
   /** Delete given company from database; returns undefined.

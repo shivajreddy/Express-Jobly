@@ -1,7 +1,6 @@
 const { BadRequestError } = require("../expressError");
 
-// THIS NEEDS SOME GREAT DOCUMENTATION.
-/**
+/** Update SQL table when partial columns need to be updated
  *
  * @param {k1 : v1, k2 : v2, ...} dataToUpdate This req.body that is passed after qualifies relative json-schema
  * @param {k1 : v1, k2 : v2, ...} jsToSql Object with keys, In the model -> keys are the js names for columns, values are relative SQl column names

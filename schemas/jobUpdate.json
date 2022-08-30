@@ -3,10 +3,6 @@
   "$id": "http://our.company.com/companyUpdate.schema.json",
   "type": "object",
   "properties": {
-    "id": {
-      "type": "number",
-      "minimum": 1
-    },
     "title": {
       "type": "string",
       "minLength": 0
@@ -17,13 +13,12 @@
     "equity": {
       "type": "number",
       "minimum": 0,
-      "maxItems": 1
+      "maximum": 1
     },
     "companyHandle": {
       "type": "string",
       "minLength": 1
     }
   },
-  "additionalProperties": false,
-  "required": ["id"]
+  "additionalProperties": false
 }
