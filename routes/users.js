@@ -6,8 +6,9 @@ const jsonschema = require("jsonschema");
 
 const express = require("express");
 const { ensureLoggedIn, ensureAdmin } = require("../middleware/auth");
-const { BadRequestError } = require("../expressError");
+const { BadRequestError, NotFoundError } = require("../expressError");
 const User = require("../models/user");
+const Job = require("../models/job");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
@@ -42,6 +43,37 @@ router.post("/", ensureAdmin, async function (req, res, next) {
   }
 });
 
+/** POST / :username/jobs/:id
+ *
+ * This allows a logged in user to apply to a job
+ * Return {...other data..., jobs:[jobId, jobId, ...]}
+ *
+ * Authorization: login
+ */
+router.post(
+  "/:username/jobs/:id",
+  ensureLoggedIn,
+  async function (req, res, next) {
+    try {
+      // make sure username and id exist
+      const user = await User.get(req.params.username);
+      if (!user)
+        throw new NotFoundError(
+          `Could't find user with username:${req.params.username}`
+        );
+      const job = await Job.get(req.params.id);
+      if (!job)
+        throw new NotFoundError(`Could't find job with id:${req.params.id}`);
+
+      // create new row in applications table
+      const application = await User.apply(req.params.username, req.params.id);
+      return res.json({ application });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
 /** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
  *
  * Returns list of all users.
@@ -60,7 +92,7 @@ router.get("/", ensureAdmin, async function (req, res, next) {
 
 /** GET /[username] => { user }
  *
- * Returns { username, firstName, lastName, isAdmin }
+ * Returns { username, firstName, lastName, isAdmin, jobs:[jobId, jobId, jobId...] }
  *
  * Authorization required: login
  **/
@@ -68,7 +100,9 @@ router.get("/", ensureAdmin, async function (req, res, next) {
 router.get("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
-    return res.json({ user });
+    const appliedJobs = await User.getJobs(req.params.username);
+    const appliedJobIds = appliedJobs.map((j) => j.job_id);
+    return res.json({ user, jobs: appliedJobIds });
   } catch (err) {
     return next(err);
   }
