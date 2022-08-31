@@ -69,12 +69,7 @@ router.get("/", async function (req, res, next) {
         return new NotFoundError(`No Company found with name: ${name}`);
       return res.json({ filteredCompany });
     }
-    //! TESTING
-    console.log("LOCALS");
-    console.log(req.user, res.locals, req.header);
-    console.log("res.locals.user = ", res.locals.user);
 
-    //! TESTING
     // Both minEmployees an maxEmployees are given
     if (minEmployees && maxEmployees) {
       // Allow only if minEmployees < maxEmployees

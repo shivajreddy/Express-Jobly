@@ -13,7 +13,7 @@ const {
 const { ensureLoggedIn, ensureAdmin } = require("../middleware/auth");
 const Job = require("../models/job");
 
-// const jobFilterSchema = require("../schemas/jobFilter.json");
+const jobFilterSchema = require("../schemas/jobFilter.json");
 const jobNewSchema = require("../schemas/jobNew.json");
 const jobUpdateSchema = require("../schemas/jobUpdate.json");
 
@@ -60,7 +60,58 @@ router.post("/", ensureAdmin, async function (req, res, next) {
 router.get("/", async function (req, res, next) {
   try {
     const jobs = await Job.findAll();
-    console.log("these are the jobs i got", jobs);
+
+    const validator = jsonschema.validate(req.body, jobFilterSchema);
+    if (!validator.valid) {
+      const errors = validator.errors.map((e) => e.stack);
+      throw new BadRequestError(errors);
+    }
+    const { title, minSalary, maxSalary, hasEquity } = req.body;
+    if (title) {
+      const filteredJobs = jobs.filter((j) =>
+        j.title.toLowerCase().includes(title.toLowerCase())
+      );
+      return res.json({ filteredJobs });
+    }
+    if (minSalary && maxSalary) {
+      if (minSalary >= maxSalary)
+        throw new ExpressError(
+          `Minimum salary:${minSalary} should be lower than maximum salary:${maxSalary}`,
+          400
+        );
+      const filteredJobs = jobs.filter(
+        (j) => j.salary && j.salary > minSalary && j.salary < maxSalary
+      );
+      if (filteredJobs.length === 0)
+        throw new NotFoundError(
+          `No Jobs found with min: ${minSalary} and max:${maxSalary}`
+        );
+      return res.json({ filteredJobs });
+    }
+    // Only minSalary is given
+    if (minSalary) {
+      const filteredJobs = jobs.filter((j) => j.salary && j.salary > minSalary);
+      if (filteredJobs.length === 0)
+        throw new NotFoundError(`No Jobs found with min: ${minSalary}`);
+      return res.json({ filteredJobs });
+    }
+    // Only minSalary is given
+    if (maxSalary) {
+      const filteredJobs = jobs.filter((j) => j.salary && j.salary < maxSalary);
+      if (filteredJobs.length === 0)
+        throw new NotFoundError(`No Jobs found with max: ${maxSalary}`);
+      return res.json({ filteredJobs });
+    }
+    if (hasEquity) {
+      const filteredJobs = jobs.filter((j) => j.equity && j.equity > 0);
+      if (filteredJobs.length === 0)
+        throw new NotFoundError(`No Jobs found with equity: ${equity}`);
+      return res.json({ total: filteredJobs.length, filteredJobs });
+    }
+
+    // Custom filtering
+    const filteredJobs = jobs.filter((j) => j.name);
+
     return res.json({ jobs });
   } catch (err) {
     return next(err);
