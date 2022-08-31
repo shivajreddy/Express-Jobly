@@ -12,6 +12,7 @@ const {
 } = require("../expressError");
 const { ensureLoggedIn, ensureAdmin } = require("../middleware/auth");
 const Company = require("../models/company");
+const Job = require("../models/job");
 
 const companyNewSchema = require("../schemas/companyNew.json");
 const companyUpdateSchema = require("../schemas/companyUpdate.json");
@@ -123,7 +124,11 @@ router.get("/", async function (req, res, next) {
 router.get("/:handle", async function (req, res, next) {
   try {
     const company = await Company.get(req.params.handle);
-    return res.json({ company });
+    const allJobs = await Job.findAll();
+    const relatedJobs = allJobs.filter(
+      (j) => j.company_handle === company.handle
+    );
+    return res.json({ company, jobs: relatedJobs });
   } catch (err) {
     return next(err);
   }

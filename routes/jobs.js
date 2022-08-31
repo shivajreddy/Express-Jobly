@@ -73,6 +73,13 @@ router.get("/", async function (req, res, next) {
       );
       return res.json({ filteredJobs });
     }
+    // if (companyHandle) {
+    //   const filteredJobs = jobs.filter(
+    //     (j) => j.company_handle.toLowerCase() === companyHandle.toLowerCase()
+    //   );
+    //   console.log("this is wtf", companyHandle, filteredJobs);
+    //   return res.json({ filteredJobs });
+    // }
     if (minSalary && maxSalary) {
       if (minSalary >= maxSalary)
         throw new ExpressError(
