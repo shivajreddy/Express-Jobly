@@ -66,8 +66,8 @@ router.get("/", async function (req, res, next) {
     const companies = await Company.findAll();
     if (name) {
       const filteredCompany = companies.filter((c) => c.name === name);
-      if (!filteredCompany)
-        return new NotFoundError(`No Company found with name: ${name}`);
+      if (filteredCompany.length === 0)
+        throw new NotFoundError(`No Company found with name: ${name}`);
       return res.json({ filteredCompany });
     }
 
